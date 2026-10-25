@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple AI Reminder | Work & Daily Activities</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0f1026;
+      --card: #1d1f33;
+      --primary: #7c9bff;
+      --success: #3fb984;
+      --warning: #f5b700;
+      --danger: #f25c54;
+      --text-primary: #f8f9fa;
+      --text-secondary: #c9d1d9;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #26284a, var(--bg));
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.5rem clamp(1rem, 4vw, 4rem);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+
+    .brand-icon {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(124, 155, 255, 0.9), rgba(63, 185, 132, 0.8));
+      box-shadow: 0 25px 40px -25px rgba(124, 155, 255, 0.9);
+    }
+
+    .brand-text h1 {
+      font-size: clamp(1.2rem, 2vw, 1.8rem);
+    }
+
+    .brand-text p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .date-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.2rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: clamp(1rem, 3vw, 2rem);
+      padding: 0 clamp(1rem, 4vw, 4rem) 3rem;
+    }
+
+    .profile-card {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: clamp(1rem, 3vw, 2rem);
+      padding: clamp(1.2rem, 3vw, 2rem);
+      border-radius: 1.2rem;
+      background: linear-gradient(135deg, rgba(124, 155, 255, 0.25), transparent);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(63, 185, 132, 0.18), transparent 55%);
+      pointer-events: none;
+    }
+
+    .profile-card>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    .avatar {
+      width: clamp(4rem, 8vw, 5.5rem);
+      height: clamp(4rem, 8vw, 5.5rem);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle, rgba(248, 249, 250, 0.9), rgba(201, 209, 217, 0.6));
+      color: var(--bg);
+      font-size: clamp(2rem, 6vw, 3rem);
+    }
+
+    .profile-info h2 {
+      font-size: clamp(1.4rem, 3vw, 2.4rem);
+    }
+
+    .profile-info p {
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+    }
+
+    .profile-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .meta-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .ai-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.4rem;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 155, 255, 0.8);
+      background: radial-gradient(circle, rgba(124, 155, 255, 0.35), transparent);
+      text-align: right;
+    }
+
+    .grid-left {
+      grid-column: 1 / 8;
+      display: grid;
+      gap: clamp(1rem, 3vw, 2rem);
+    }
+
+    .grid-right {
+      grid-column: 8 / -1;
+      display: grid;
+      gap: clamp(1rem, 3vw, 2rem);
+      align-content: start;
+    }
+
+    .card {
+      border-radius: 1.2rem;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: clamp(1.2rem, 3vw, 1.8rem) clamp(1.2rem, 3vw, 2rem) 0;
+    }
+
+    .card-header h3 {
+      font-size: clamp(1.1rem, 2vw, 1.6rem);
+    }
+
+    .card-header p {
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+    }
+
+    .card-body {
+      display: grid;
+      gap: 1rem;
+      padding: clamp(1rem, 2vw, 1.6rem) clamp(1.2rem, 3vw, 2rem) clamp(1.4rem, 3vw, 2rem);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      color: var(--text-secondary);
+      font-size: 0.98rem;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border-radius: 0.9rem;
+      border: 1px solid transparent;
+      background: rgba(15, 16, 38, 0.8);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: rgba(124, 155, 255, 0.9);
+      box-shadow: 0 0 0 4px rgba(124, 155, 255, 0.12);
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 0.8rem 1.8rem;
+      background: linear-gradient(135deg, rgba(124, 155, 255, 1), rgba(63, 185, 132, 0.9));
+      color: var(--text-primary);
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+
+    .list {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .empty-state {
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 0.8rem;
+      padding: clamp(2rem, 6vw, 4rem);
+      color: var(--text-secondary);
+    }
+
+    .empty-state.hidden {
+      display: none;
+    }
+
+    .reminder-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1rem;
+      align-items: start;
+      padding: clamp(1rem, 2vw, 1.4rem);
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      background: rgba(15, 16, 38, 0.7);
+    }
+
+    .reminder-item.completed {
+      opacity: 0.7;
+    }
+
+    .reminder-item.completed .reminder-title {
+      text-decoration: line-through;
+    }
+
+    .status-dot {
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 50%;
+      margin-top: 0.6rem;
+      background: var(--primary);
+      box-shadow: 0 0 0 10px rgba(124, 155, 255, 0.12);
+    }
+
+    .reminder-item.work .status-dot {
+      background: var(--warning);
+      box-shadow: 0 0 0 10px rgba(245, 183, 0, 0.14);
+    }
+
+    .reminder-item.personal .status-dot {
+      background: var(--success);
+      box-shadow: 0 0 0 10px rgba(63, 185, 132, 0.14);
+    }
+
+    .reminder-main {
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .reminder-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .reminder-title {
+      font-size: 1.1rem;
+    }
+
+    .pill {
+      padding: 0.25rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .pill-tone {
+      background: rgba(124, 155, 255, 0.15);
+      border-color: rgba(124, 155, 255, 0.4);
+      color: var(--primary);
+    }
+
+    .ai-voice-msg {
+      margin-top: 0.4rem;
+      padding: 0.7rem 0.9rem;
+      border-radius: 0.7rem;
+      background: rgba(124, 155, 255, 0.08);
+      border: 1px solid rgba(124, 155, 255, 0.2);
+      font-size: 0.92rem;
+      font-style: italic;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+    }
+
+    .reminder-actions {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    .icon-btn {
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .icon-btn.done:hover {
+      color: var(--success);
+    }
+
+    .icon-btn.delete:hover {
+      color: var(--danger);
+    }
+
+    .icon-btn.speak:hover {
+      color: var(--primary);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .summary-card {
+      display: grid;
+      gap: 0.4rem;
+      padding: 1.2rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      background: rgba(15, 16, 38, 0.7);
+    }
+
+    .summary-card h4 {
+      font-size: 2rem;
+    }
+
+    .summary-card p {
+      color: var(--text-secondary);
+    }
+
+    .tip-card {
+      display: grid;
+      gap: 0.8rem;
+      padding: clamp(1.2rem, 3vw, 1.8rem);
+    }
+
+    .tip-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .tip-dot {
+      width: 0.6rem;
+      height: 0.6rem;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 12px rgba(124, 155, 255, 0.12);
+    }
+
+    .tip-text {
+      color: var(--text-secondary);
+    }
+
+    footer {
+      padding: 0 clamp(1rem, 4vw, 4rem) 2rem;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 1080px) {
+      .grid-left, .grid-right {
+        grid-column: 1 / -1;
+      }
+
+      .profile-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+        justify-items: center;
+      }
+
+      .ai-badge {
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .form-grid, .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .reminder-item {
+        grid-template-columns: auto 1fr;
+      }
+
+      .reminder-actions {
+        grid-column: 1 / -1;
+        justify-self: end;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-robot"></i>
+      </div>
+      <div class="brand-text">
+        <h1>Simple AI Reminder</h1>
+        <p>Save your work details & daily activities with personalized AI voice tones</p>
+      </div>
+    </div>
+    <div class="date-pill">
+      <i class="fa-regular fa-calendar"></i>
+      <span id="today-date">Loading...</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="profile-card">
+      <div class="avatar">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <div class="profile-info">
+        <h2 contenteditable="true" spellcheck="false" id="user-name">Your Full Name</h2>
+        <p contenteditable="true" spellcheck="false">Your Role / Occupation (e.g. Student, Employee, Freelancer)</p>
+        <div class="profile-meta">
+          <div class="meta-chip">
+            <i class="fa-solid fa-briefcase"></i>
+            <span contenteditable="true" spellcheck="false">Work Focus: Productivity</span>
+          </div>
+          <div class="meta-chip">
+            <i class="fa-solid fa-location-dot"></i>
+            <span contenteditable="true" spellcheck="false">Location: Remote</span>
+          </div>
+          <div class="meta-chip">
+            <i class="fa-solid fa-envelope"></i>
+            <span contenteditable="true" spellcheck="false">Contact: user@domain.com</span>
+          </div>
+        </div>
+      </div>
+      <div class="ai-badge">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <div>
+          <strong>AI Reminder Tone</strong>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;" id="active-tone-display">Active: Drill Sergeant</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid-left">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h3>Add New Work / Activity Reminder</h3>
+            <p>Fill in the details and choose your AI tone below</p>
+          </div>
+          <div class="date-pill">
+            <i class="fa-solid fa-plus"></i>
+            <span>New Reminder</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="task-title">Task / Activity Title *</label>
+              <input id="task-title" placeholder="e.g. Submit project report, Attend meeting" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="task-type">Category</label>
+              <select id="task-type">
+                <option value="work">💼 Work</option>
+                <option value="personal">🌿 Personal</option>
+                <option value="study">📚 Study</option>
+                <option value="health">🥗 Health</option>
+                <option value="others">📌 Others</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="task-date">Date *</label>
+              <input type="date" id="task-date">
+            </div>
+            <div class="form-group">
+              <label for="task-time">Time *</label>
+              <input type="time" id="task-time">
+            </div>
+
+            <!-- Tone Selector -->
+            <div class="form-group full">
+              <label for="ai-tone">Choose AI Reminder Tone</label>
+              <select id="ai-tone" onchange="toggleCustomToneInput()">
+                <option value="drill">🎖️ Drill Sergeant (Strict, loud & urgency-driven)</option>
+                <option value="zen">🧘 Zen Monk (Calm, mindful & peaceful)</option>
+                <option value="hype">🔥 Hype Coach (Enthusiastic, energetic & uplifting)</option>
+                <option value="corporate">💼 Corporate Exec (Formal synergy, KPIs & deliverables)</option>
+                <option value="sarcastic">😏 Sassy / Witty (Dry sarcasm & anti-procrastination)</option>
+                <option value="custom">🪄 Custom Tone / Persona (Write your own)</option>
+              </select>
+            </div>
+
+            <div class="form-group full" id="custom-tone-wrapper" style="display: none;">
+              <label for="custom-tone-prompt">Define Custom Persona</label>
+              <input id="custom-tone-prompt" placeholder="e.g., Speak like Master Yoda or a poetic pirate...">
+            </div>
+
+            <div class="form-group full">
+              <label for="task-notes">Work Details / Notes</label>
+              <textarea id="task-notes" placeholder="Add brief details like location, files to carry, or steps to follow..."></textarea>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn" id="add-reminder">
+              <i class="fa-solid fa-floppy-disk"></i>
+              Save Reminder
+            </button>
+            <button class="btn btn-ghost" id="clear-form">
+              <i class="fa-solid fa-rotate-left"></i>
+              Clear Form
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h3>Saved Work & Daily Activities</h3>
+            <p>All your tone-adapted reminders are saved here</p>
+          </div>
+          <div class="date-pill">
+            <i class="fa-solid fa-list-check"></i>
+            <span id="count-text">0 Reminders</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="list" id="reminder-list"></div>
+          <div class="empty-state" id="empty-state">
+            <i class="fa-regular fa-calendar-check" style="font-size: 2.6rem;"></i>
+            <div>
+              <h4>No reminders added yet</h4>
+              <p>Add your first work task or daily activity using the form above</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid-right">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h3>Quick Summary</h3>
+            <p>Track your progress at a glance</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="summary-grid">
+            <article class="summary-card">
+              <p>Total Reminders</p>
+              <h4 id="total-count">0</h4>
+              <p>Saved Activities</p>
+            </article>
+            <article class="summary-card">
+              <p>Pending</p>
+              <h4 id="pending-count">0</h4>
+              <p>To be completed</p>
+            </article>
+            <article class="summary-card">
+              <p>Completed</p>
+              <h4 id="completed-count">0</h4>
+              <p>Done for now</p>
+            </article>
+            <article class="summary-card">
+              <p>Today</p>
+              <h4 id="today-count">0</h4>
+              <p>Due today</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="tip-card">
+          <div class="tip-header">
+            <div class="tip-dot"></div>
+            <div>
+              <h3>AI Persona Voice Engine</h3>
+              <p style="color: var(--text-secondary);">Native Web Speech Audio</p>
+            </div>
+          </div>
+          <p class="tip-text">Every task generated gets an AI-crafted alert line tuned to your persona. Click the <strong><i class="fa-solid fa-volume-high"></i> speaker icon</strong> on any task to hear it spoken out loud!</p>
+          <div class="tip-header">
+            <i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i>
+            <p style="color: var(--text-secondary);">Tip: Choose "Drill Sergeant" when feeling lazy and need a push.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>Simple AI Reminder &copy; <span id="year"></span> | Designed for tracking Work & Daily Activities</p>
+  </footer>
+
+  <template id="reminder-template">
+    <article class="reminder-item">
+      <div class="status-dot"></div>
+      <div class="reminder-main">
+        <div class="reminder-head">
+          <h4 class="reminder-title"></h4>
+          <span class="pill category-pill"></span>
+          <span class="pill pill-tone tone-pill"></span>
+          <span class="pill date-pill-text"></span>
+          <span class="pill time-pill-text"></span>
+        </div>
+        <p class="reminder-notes" style="font-size:0.95rem;"></p>
+        <div class="ai-voice-msg">
+          <span class="ai-text"></span>
+          <button class="icon-btn speak" title="Listen to AI voice reminder">
+            <i class="fa-solid fa-volume-high"></i>
+          </button>
+        </div>
+      </div>
+      <div class="reminder-actions">
+        <button class="icon-btn done" title="Mark as done / undo">
+          <i class="fa-solid fa-check"></i>
+        </button>
+        <button class="icon-btn delete" title="Delete reminder">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    const reminderList = document.getElementById("reminder-list");
+    const emptyState = document.getElementById("empty-state");
+    const addBtn = document.getElementById("add-reminder");
+    const clearBtn = document.getElementById("clear-form");
+    const template = document.getElementById("reminder-template");
+
+    const titleInput = document.getElementById("task-title");
+    const typeInput = document.getElementById("task-type");
+    const dateInput = document.getElementById("task-date");
+    const timeInput = document.getElementById("task-time");
+    const notesInput = document.getElementById("task-notes");
+    const toneSelect = document.getElementById("ai-tone");
+    const customToneWrapper = document.getElementById("custom-tone-wrapper");
+    const customTonePrompt = document.getElementById("custom-tone-prompt");
+    const activeToneDisplay = document.getElementById("active-tone-display");
+
+    const countText = document.getElementById("count-text");
+    const totalCount = document.getElementById("total-count");
+    const pendingCount = document.getElementById("pending-count");
+    const completedCount = document.getElementById("completed-count");
+    const todayCount = document.getElementById("today-count");
+    const todayDateEl = document.getElementById("today-date");
+    const yearEl = document.getElementById("year");
+
+    const STORAGE_KEY = "simple-ai-reminder-data";
+    let reminders = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    const now = new Date();
+    todayDateEl.textContent = now.toLocaleDateString(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+    yearEl.textContent = now.getFullYear();
+    dateInput.value = now.toISOString().split("T")[0];
+
+    const toneGenerators = {
+      drill: (title) => `ATTENTION SOLDIER! It is time to execute "${title}". Stop procrastinating, lock in, and get it done right now!`,
+      zen: (title) => `Take a deep, calming breath. When you feel ready, gently turn your attention to "${title}". Move with peace and purpose.`,
+      hype: (title) => `LET'S GOOO! You are unstoppable today! Time to smash "${title}" out of the park!`,
+      corporate: (title) => `Friendly cadence reminder: please align your bandwidth to execute "${title}" before end of day to optimize deliverables.`,
+      sarcastic: (title) => `Hate to disrupt your scrolling session, but "${title}" is not going to finish itself. Tragic, isn't it?`,
+      custom: (title, prompt) => `[Persona: ${prompt || "Custom"}]: Hey! Don't forget it's time to tackle "${title}". Make it count!`
+    };
+
+    function toggleCustomToneInput() {
+      if (toneSelect.value === 'custom') {
+        customToneWrapper.style.display = 'grid';
+      } else {
+        customToneWrapper.style.display = 'none';
+      }
+      activeToneDisplay.textContent = `Active: ${toneSelect.options[toneSelect.selectedIndex].text.split('(')[0].trim()}`;
+    }
+
+    function generateToneAlert(title, tone, customPrompt) {
+      if (tone === 'custom') {
+        return toneGenerators.custom(title, customPrompt);
+      }
+      return toneGenerators[tone] ? toneGenerators[tone](title) : toneGenerators.drill(title);
+    }
+
+    function speakAlert(text, tone) {
+      if (!('speechSynthesis' in window)) {
+        alert("Speech synthesis is not supported on this browser.");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (tone === 'drill') {
+        utterance.rate = 1.2;
+        utterance.pitch = 0.9;
+      } else if (tone === 'zen') {
+        utterance.rate = 0.85;
+        utterance.pitch = 1.0;
+      } else if (tone === 'hype') {
+        utterance.rate = 1.25;
+        utterance.pitch = 1.2;
+      } else {
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+      }
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reminders));
+      render();
+    }
+
+    function clearForm() {
+      titleInput.value = "";
+      notesInput.value = "";
+      timeInput.value = "";
+      dateInput.value = now.toISOString().split("T")[0];
+      typeInput.value = "work";
+      customTonePrompt.value = "";
+      titleInput.focus();
+    }
+
+    function addReminder() {
+      const title = titleInput.value.trim();
+      const date = dateInput.value;
+      const time = timeInput.value;
+      const tone = toneSelect.value;
+      const customPrompt = customTonePrompt.value.trim();
+
+      if (!title) {
+        alert("Please enter a Task / Activity Title.");
+        titleInput.focus();
+        return;
+      }
+      if (!date) {
+        alert("Please select a date.");
+        dateInput.focus();
+        return;
+      }
+      if (!time) {
+        alert("Please select a time.");
+        timeInput.focus();
+        return;
+      }
+
+      const reminder = {
+        id: Date.now().toString(),
+        title,
+        type: typeInput.value,
+        date,
+        time,
+        tone: tone,
+        aiMessage: generateToneAlert(title, tone, customPrompt),
+        notes: notesInput.value.trim(),
+        completed: false,
+        createdAt: new Date().toISOString()
+      };
+
+      reminders.unshift(reminder);
+      save();
+      clearForm();
+    }
+
+    function toggleComplete(id) {
+      reminders = reminders.map((item) => item.id === id ? { ...item, completed: !item.completed } : item);
+      save();
+    }
+
+    function deleteReminder(id) {
+      if (confirm("Delete this reminder?")) {
+        reminders = reminders.filter((item) => item.id !== id);
+        save();
+      }
+    }
+
+    function render() {
+      reminderList.innerHTML = "";
+
+      if (reminders.length === 0) {
+        emptyState.classList.remove("hidden");
+      } else {
+        emptyState.classList.add("hidden");
+      }
+
+      const todayStr = now.toISOString().split("T")[0];
+      let total = reminders.length;
+      let completed = 0;
+      let pending = 0;
+      let today = 0;
+
+      reminders.forEach((item) => {
+        if (item.completed) completed++; else pending++;
+        if (item.date === todayStr) today++;
+
+        const node = template.content.cloneNode(true);
+        const article = node.querySelector(".reminder-item");
+        const titleEl = node.querySelector(".reminder-title");
+        const categoryEl = node.querySelector(".category-pill");
+        const toneEl = node.querySelector(".tone-pill");
+        const dateEl = node.querySelector(".date-pill-text");
+        const timeEl = node.querySelector(".time-pill-text");
+        const notesEl = node.querySelector(".reminder-notes");
+        const aiTextEl = node.querySelector(".ai-text");
+        const speakBtn = node.querySelector(".speak");
+        const doneBtn = node.querySelector(".done");
+        const deleteBtn = node.querySelector(".delete");
+
+        article.classList.add(item.type);
+        if (item.completed) article.classList.add("completed");
+
+        titleEl.textContent = item.title;
+        categoryEl.textContent = item.type.charAt(0).toUpperCase() + item.type.slice(1);
+        toneEl.textContent = (item.tone || 'drill').toUpperCase();
+        dateEl.innerHTML = `<i class="fa-regular fa-calendar"></i> ${item.date}`;
+        timeEl.innerHTML = `<i class="fa-regular fa-clock"></i> ${item.time}`;
+        notesEl.textContent = item.notes ? `Details: ${item.notes}` : "No notes added.";
+        aiTextEl.textContent = `"${item.aiMessage || generateToneAlert(item.title, 'drill')}"`;
+
+        speakBtn.addEventListener("click", () => {
+          speakAlert(item.aiMessage || item.title, item.tone);
+        });
+
+        doneBtn.addEventListener("click", () => toggleComplete(item.id));
+        deleteBtn.addEventListener("click", () => deleteReminder(item.id));
+
+        reminderList.appendChild(node);
+      });
+
+      countText.textContent = `${total} Reminder${total === 1 ? "" : "s"}`;
+      totalCount.textContent = total;
+      completedCount.textContent = completed;
+      pendingCount.textContent = pending;
+      todayCount.textContent = today;
+    }
+
+    addBtn.addEventListener("click", addReminder);
+    clearBtn.addEventListener("click", clearForm);
+
+    render();
+  </script>
+</body>
+
+</html>
